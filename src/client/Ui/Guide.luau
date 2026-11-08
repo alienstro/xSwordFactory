@@ -1,6 +1,7 @@
 --!strict
--- The guide: it shows one step at a time and points to the next button.
+-- The guide: a small tooltip next to the button that the player must tap next.
 
+local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 
 local Theme = require(script.Parent.Theme) :: any
@@ -13,23 +14,35 @@ type Step = {
 	done: (name: string, result: any) -> boolean,
 }
 
+local TOOLTIP_WIDTH = 300
+local GAP = 14
+
+-- The name of a target inside a sheet if the sheet shows it, else the fallback target.
+local function inSheetOr(ctx: any, name: string, fallback: string): string
+	local t = ctx.targets[name]
+	if t and t.Parent and t:IsDescendantOf(ctx.root) then
+		return name
+	end
+	return fallback
+end
+
 local STEPS: { Step } = {
 	{
 		tab = "Forge",
 		target = function()
 			return "ForgeButton"
 		end,
-		text = "Welcome to Sword Factory! Click <b>Forge</b> to make your first sword. Each part of the sword is a chance roll.",
+		text = "Welcome! Tap <b>FORGE</b> to roll your first sword. Each part of the sword is a chance roll.",
 		done = function(name)
 			return name == "Forge"
 		end,
 	},
 	{
 		tab = "Swords",
-		target = function()
-			return "EquipButton"
+		target = function(ctx)
+			return inSheetOr(ctx, "EquipButton", "FirstSword")
 		end,
-		text = "Open the <b>Swords</b> tab and click <b>Equip</b>. Only the equipped sword fights.",
+		text = "Tap your sword, then tap <b>Equip</b>. Only the equipped sword fights.",
 		done = function(name)
 			return name == "Equip"
 		end,
@@ -39,27 +52,27 @@ local STEPS: { Step } = {
 		target = function(ctx)
 			return if ctx.state and ctx.state.fight then "AttackButton" else "FirstMonster"
 		end,
-		text = "Open the <b>Fight</b> tab and fight the <b>Slime</b>. Click <b>Attack</b> until you win.",
+		text = "Fight the <b>Slime</b>. Tap <b>Attack</b> until you win, or turn on <b>AUTO</b>.",
 		done = function(name, result)
 			return name == "FightTurn" and result.outcome == "win"
 		end,
 	},
 	{
 		tab = "Swords",
-		target = function()
-			return "EnhanceButton"
+		target = function(ctx)
+			return inSheetOr(ctx, "EnhanceButton", "FirstSword")
 		end,
-		text = "Use your gold to <b>Enhance</b> your sword. An attempt can fail, but the sword keeps its level.",
+		text = "Open your sword and tap <b>Enhance</b>. An attempt can fail, but the sword keeps its level.",
 		done = function(name)
 			return name == "Enhance"
 		end,
 	},
 	{
 		tab = "Swords",
-		target = function()
-			return "EnchantButton"
+		target = function(ctx)
+			return inSheetOr(ctx, "EnchantButton", "FirstSword")
 		end,
-		text = "If your sword has an empty slot, click <b>Enchant</b>. Forge more swords to find more slots. Good luck!",
+		text = "If your sword has an empty slot, tap <b>Enchant</b>. Forge more swords to find more slots. Good luck!",
 		done = function(name)
 			return name == "Enchant"
 		end,
@@ -68,17 +81,17 @@ local STEPS: { Step } = {
 
 local Guide = {}
 
-local panel: Frame
+local tooltip: Frame
 local stepLabel: TextLabel
 local textLabel: TextLabel
 local nextButton: TextButton
 local stroke: UIStroke
 local current = 0 -- 0 means that the guide is not active
+local follow: RBXScriptConnection? = nil
 
 local function finish(ctx: any)
 	current = 0
-	panel.Visible = false
-	stroke.Parent = nil
+	Guide.update(ctx)
 	if ctx.state and not ctx.state.data.guideDone then
 		ctx.request("FinishGuide")
 	end
@@ -91,44 +104,86 @@ local function advance(ctx: any)
 	end
 	current += 1
 	Guide.update(ctx)
+	W.pop(tooltip, 0.85)
+end
+
+local function targetOf(ctx: any): GuiObject?
+	if current == 0 then
+		return nil
+	end
+	local step = STEPS[current]
+	local name = if ctx.currentTab == step.tab then step.target(ctx) else step.tab .. "Tab"
+	local target = ctx.targets[name]
+	if target and target.Parent and target:IsDescendantOf(ctx.root) then
+		return target
+	end
+	return nil
+end
+
+-- Puts the tooltip above or below the target, inside the screen.
+local function place(ctx: any)
+	local target = targetOf(ctx)
+	if not target then
+		tooltip.Position = UDim2.new(0.5, -TOOLTIP_WIDTH / 2, 0, 80)
+		return
+	end
+	local root = ctx.root :: Frame
+	local s = (root:FindFirstChildOfClass("UIScale") :: UIScale).Scale
+	local rootPos = root.AbsolutePosition
+	local rootSize = root.AbsoluteSize / s
+	local pos = (target.AbsolutePosition - rootPos) / s
+	local size = target.AbsoluteSize / s
+	local height = tooltip.AbsoluteSize.Y / s
+
+	-- A tab button is at the bottom, below the main action. The stroke shows the tab,
+	-- and the tooltip waits near the top, so that it does not cover the main action.
+	if target.Name:match("Tab$") then
+		tooltip.Position = UDim2.fromOffset(math.max(8, rootSize.X / 2 - TOOLTIP_WIDTH / 2), 76)
+		return
+	end
+
+	local x = math.clamp(pos.X + size.X / 2 - TOOLTIP_WIDTH / 2, 8, rootSize.X - TOOLTIP_WIDTH - 8)
+	local below = pos.Y + size.Y + GAP
+	local above = pos.Y - GAP - height
+	local y = if pos.Y + size.Y / 2 < rootSize.Y / 2 then below else above
+	y = math.clamp(y, 8, rootSize.Y - height - 8)
+	tooltip.Position = UDim2.fromOffset(x, y)
 end
 
 function Guide.create(ctx: any)
-	panel = W.panel({
-		AnchorPoint = Vector2.new(0, 1),
-		Position = UDim2.new(0, 28, 1, -28),
-		Size = UDim2.new(0, 380, 0, 0),
+	tooltip = W.new("Frame", {
+		Size = UDim2.fromOffset(TOOLTIP_WIDTH, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
-		BackgroundColor3 = Color3.fromRGB(40, 34, 28),
+		BackgroundColor3 = Color3.fromRGB(46, 28, 70),
+		BorderSizePixel = 0,
 		Visible = false,
-		ZIndex = 60,
+		ZIndex = 75,
 		Parent = ctx.root,
-	})
-	W.new("UIStroke", { Color = Theme.Accent, Thickness = 2, Parent = panel })
-	W.list(8).Parent = panel
-	stepLabel = W.label({ Text = "", TextColor3 = Theme.Accent, Font = Theme.FontBold, TextSize = 16, LayoutOrder = 1, Parent = panel })
-	textLabel = W.label({ Text = "", TextSize = 19, LayoutOrder = 2, Parent = panel })
+	}, { W.corner(14), W.padding(12), W.stroke(Theme.Gold, 2), W.list(8) })
+	stepLabel = W.label({ Text = "", Font = Theme.FontBold, TextSize = 13, TextColor3 = Theme.Gold, LayoutOrder = 1, ZIndex = 76, Parent = tooltip })
+	textLabel = W.label({ Text = "", TextSize = 17, LayoutOrder = 2, ZIndex = 76, Parent = tooltip })
 	local row = W.new("Frame", {
 		BackgroundTransparency = 1,
 		Size = UDim2.new(1, 0, 0, 40),
 		LayoutOrder = 3,
-		Parent = panel,
+		ZIndex = 76,
+		Parent = tooltip,
 	}, {
 		W.new("UIGridLayout", {
 			CellSize = UDim2.new(0.5, -4, 1, 0),
-			CellPadding = UDim2.new(0, 8, 0, 0),
+			CellPadding = UDim2.fromOffset(8, 0),
 			SortOrder = Enum.SortOrder.LayoutOrder,
 		}),
 	})
-	W.button("Skip guide", { LayoutOrder = 1, TextSize = 16, Parent = row }, function()
+	W.button("Skip guide", { LayoutOrder = 1, TextSize = 15, ZIndex = 77, Parent = row }, function()
 		finish(ctx)
 	end)
-	nextButton = W.button("Next", { LayoutOrder = 2, TextSize = 16, Parent = row }, function()
+	nextButton = W.button("Next", { LayoutOrder = 2, TextSize = 15, ZIndex = 77, Parent = row }, function()
 		advance(ctx)
 	end)
 
 	stroke = W.new("UIStroke", {
-		Color = Theme.Accent,
+		Color = Theme.Gold,
 		Thickness = 4,
 		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 	})
@@ -151,24 +206,34 @@ end
 function Guide.start(ctx: any)
 	current = 1
 	Guide.update(ctx)
+	W.pop(tooltip, 0.85)
 end
 
 -- Shows the current step and points to its button.
 function Guide.update(ctx: any)
 	if current == 0 then
-		panel.Visible = false
+		tooltip.Visible = false
 		stroke.Parent = nil
+		if follow then
+			follow:Disconnect()
+			follow = nil
+		end
 		return
 	end
 	local step = STEPS[current]
-	panel.Visible = true
-	stepLabel.Text = `GUIDE · STEP {current} OF {#STEPS}`
+	tooltip.Visible = true
+	stepLabel.Text = `GUIDE  ·  STEP {current} OF {#STEPS}`
 	textLabel.Text = step.text
 	nextButton.Text = if current == #STEPS then "Finish" else "Next"
-
-	local targetName = if ctx.currentTab == step.tab then step.target(ctx) else step.tab .. "Tab"
-	local target = ctx.targets[targetName]
-	stroke.Parent = if target and target.Parent then target else nil
+	stroke.Parent = targetOf(ctx)
+	if not follow then
+		-- The target can move (for example, when a sheet opens), so the tooltip follows it.
+		follow = RunService.RenderStepped:Connect(function()
+			stroke.Parent = targetOf(ctx)
+			place(ctx)
+		end)
+	end
+	place(ctx)
 end
 
 return Guide

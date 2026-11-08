@@ -10,47 +10,73 @@ local W = require(script.Parent.Widgets) :: any
 
 local UpgradesTab = {}
 
+local ICONS = { Luck = "🍀", Slots = "💎", Durability = "🛡️" }
+local COLORS = { Luck = Theme.Tiers[2], Slots = Theme.Tiers[4], Durability = Theme.Tiers[3] }
+
 function UpgradesTab.create(page: Frame, ctx: any)
-	local panel = W.panel({ Size = UDim2.fromScale(1, 1), Parent = page })
-	W.list(10).Parent = panel
-	W.label({ Text = "Forge upgrades", Font = Theme.FontBold, TextSize = 24, LayoutOrder = 0, Parent = panel })
+	local column = W.scroll({
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.fromScale(0.5, 0),
+		Size = UDim2.new(1, -28, 1, 0),
+		Parent = page,
+	})
+	W.maxWidth(560).Parent = column
+	W.list(12).Parent = column
+	W.padding(4, 8).Parent = column
+
+	W.label({ Text = "Forge upgrades", Font = Theme.FontDisplay, TextSize = 24, LayoutOrder = 0, Parent = column })
 	W.label({
-		Text = "Each level makes the rare entries more likely. The Forge tab always shows the real odds.",
+		Text = "Each level makes the rare results more likely. The Odds sheet in the Forge tab always shows the real odds.",
 		TextColor3 = Theme.Muted,
+		TextSize = 16,
 		LayoutOrder = 1,
-		Parent = panel,
+		Parent = column,
 	})
 
 	local rows = {}
 	for i, def in Config.Upgrades do
-		local row = W.panel({
-			BackgroundColor3 = Theme.PanelLight,
-			Size = UDim2.new(1, 0, 0, 84),
-			LayoutOrder = 1 + i,
-			Parent = panel,
+		local color = COLORS[def.id] or Theme.Gold
+		local card = W.card({ Size = UDim2.new(1, 0, 0, 128), LayoutOrder = 1 + i, Parent = column })
+		W.stroke(color, 1.5, 0.4).Parent = card
+		W.label({
+			Text = ICONS[def.id] or "⭐",
+			TextSize = 34,
+			TextXAlignment = Enum.TextXAlignment.Center,
+			Size = UDim2.fromOffset(48, 48),
+			Parent = card,
 		})
-		local title = W.label({ Text = "", Font = Theme.FontBold, TextSize = 21, Size = UDim2.new(0.65, 0, 0, 28), Parent = row })
+		local title = W.label({
+			Text = "",
+			Font = Theme.FontDisplay,
+			TextSize = 21,
+			Size = UDim2.new(1, -60, 0, 26),
+			Position = UDim2.fromOffset(58, 0),
+			Parent = card,
+		})
 		local info = W.label({
 			Text = "",
 			TextColor3 = Theme.Muted,
-			TextSize = 16,
-			Size = UDim2.new(0.65, 0, 0, 30),
-			Position = UDim2.new(0, 0, 0, 30),
-			Parent = row,
+			TextSize = 15,
+			Size = UDim2.new(1, -60, 0, 20),
+			Position = UDim2.fromOffset(58, 28),
+			Parent = card,
 		})
+		local _, setDots = W.dots({ Position = UDim2.fromOffset(58, 56), Parent = card }, def.maxLevel, color)
 		local buy = W.button("Buy", {
-			Size = UDim2.new(0.33, 0, 1, 0),
-			Position = UDim2.new(0.67, 0, 0, 0),
-			BackgroundColor3 = Theme.Accent,
-			TextColor3 = Theme.Background,
-			Parent = row,
+			primary = true,
+			AnchorPoint = Vector2.new(0, 1),
+			Position = UDim2.fromScale(0, 1),
+			Size = UDim2.new(1, 0, 0, 42),
+			TextSize = 17,
+			Parent = card,
 		}, function()
 			local result = ctx.request("Upgrade", { upgradeId = def.id })
 			if result.ok then
-				ctx.toast(`{def.name} upgraded.`, Theme.Good)
+				W.sound("Win", 0.4)
+				ctx.toast(`{def.name} upgraded!`, Theme.Good)
 			end
 		end)
-		rows[def.id] = { def = def, title = title, info = info, buy = buy }
+		rows[def.id] = { def = def, title = title, info = info, setDots = setDots, buy = buy }
 	end
 
 	local function update(state)
@@ -58,16 +84,17 @@ function UpgradesTab.create(page: Frame, ctx: any)
 		for _, row in rows do
 			local def = row.def
 			local level = data.upgrades[def.id] or 0
-			row.title.Text = `{def.name} · level {level}/{def.maxLevel}`
+			row.title.Text = `{def.name}  <font color="{W.hex(Theme.Muted)}">level {level}/{def.maxLevel}</font>`
+			row.setDots(level)
 			local now = def.mult(level)
 			if level >= def.maxLevel then
 				row.info.Text = `{def.text}. Rare chances ×{now}.`
-				row.buy.Text = "Max level"
+				row.buy.Text = "MAX LEVEL"
 				W.setEnabled(row.buy, false)
 			else
 				local cost = def.cost(level)
-				row.info.Text = `{def.text}. Rare chances ×{now} → ×{def.mult(level + 1)}.`
-				row.buy.Text = `Buy · {W.number(cost)} gold`
+				row.info.Text = `{def.text}. Rare chances ×{now} → ×{def.mult(level + 1)}`
+				row.buy.Text = `Upgrade  ·  {W.number(cost)} gold`
 				W.setEnabled(row.buy, data.gold >= cost)
 			end
 		end

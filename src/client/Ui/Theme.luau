@@ -1,39 +1,61 @@
 --!strict
--- Colours and fonts of the UI.
+-- Colours, fonts, and sounds of the casino-style UI.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Odds = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Odds")) :: any
 
 local Theme = {}
 
-Theme.Background = Color3.fromRGB(18, 20, 26)
-Theme.Panel = Color3.fromRGB(30, 33, 42)
-Theme.PanelLight = Color3.fromRGB(42, 46, 58)
-Theme.Button = Color3.fromRGB(52, 57, 72)
-Theme.ButtonHover = Color3.fromRGB(66, 72, 90)
-Theme.Text = Color3.fromRGB(235, 236, 240)
-Theme.Muted = Color3.fromRGB(150, 156, 170)
-Theme.Accent = Color3.fromRGB(255, 154, 60)
-Theme.Good = Color3.fromRGB(94, 209, 122)
-Theme.Bad = Color3.fromRGB(229, 83, 75)
-Theme.GoldText = Color3.fromRGB(255, 205, 80)
+Theme.Background = Color3.fromRGB(15, 11, 30)
+Theme.BackgroundTop = Color3.fromRGB(34, 20, 64)
+Theme.Panel = Color3.fromRGB(27, 21, 53)
+Theme.PanelLight = Color3.fromRGB(39, 31, 74)
+Theme.Button = Color3.fromRGB(58, 47, 107)
+Theme.Text = Color3.fromRGB(255, 255, 255)
+Theme.Muted = Color3.fromRGB(164, 157, 200)
+Theme.Gold = Color3.fromRGB(255, 200, 61)
+Theme.Good = Color3.fromRGB(61, 220, 132)
+Theme.Bad = Color3.fromRGB(255, 77, 106)
+Theme.PrimaryA = Color3.fromRGB(255, 95, 143) -- pink
+Theme.PrimaryB = Color3.fromRGB(255, 177, 61) -- orange
 
 Theme.Font = Enum.Font.BuilderSans
 Theme.FontBold = Enum.Font.BuilderSansBold
+Theme.FontDisplay = Enum.Font.FredokaOne
 
--- Colours of the rarity tiers 1 to 6: grey, green, blue, purple, gold, red.
+-- Colours of the rarity tiers: Common, Uncommon, Rare, Epic, Legendary, Mythic.
 Theme.Tiers = {
-	Color3.fromRGB(176, 180, 186),
-	Color3.fromRGB(94, 209, 122),
-	Color3.fromRGB(78, 163, 255),
-	Color3.fromRGB(179, 107, 255),
-	Color3.fromRGB(255, 200, 61),
-	Color3.fromRGB(255, 77, 77),
+	Color3.fromRGB(184, 188, 200),
+	Color3.fromRGB(76, 224, 138),
+	Color3.fromRGB(63, 169, 255),
+	Color3.fromRGB(182, 92, 255),
+	Color3.fromRGB(255, 182, 39),
+	Color3.fromRGB(255, 61, 110),
 }
 
--- The colour of a "1 in N" value.
+Theme.Rainbow = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 61, 110)),
+	ColorSequenceKeypoint.new(0.25, Color3.fromRGB(255, 182, 39)),
+	ColorSequenceKeypoint.new(0.5, Color3.fromRGB(76, 224, 138)),
+	ColorSequenceKeypoint.new(0.75, Color3.fromRGB(63, 169, 255)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(182, 92, 255)),
+})
+
+-- Sounds from the Studio content folder. A missing file only gives a warning.
+Theme.Sounds = {
+	Tick = "rbxasset://sounds/clickfast.wav",
+	Rare = "rbxasset://sounds/electronicpingshort.wav",
+	Hit = "rbxasset://sounds/swordslash.wav",
+	Win = "rbxasset://sounds/victory.wav",
+	Click = "rbxasset://sounds/button.wav",
+}
+
 function Theme.tierColor(oneIn: number): Color3
 	return Theme.Tiers[Odds.tier(oneIn)]
+end
+
+function Theme.tier(oneIn: number): number
+	return Odds.tier(oneIn)
 end
 
 return Theme

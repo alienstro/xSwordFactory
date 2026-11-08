@@ -140,16 +140,16 @@ Config.MonsterAttackSpread = 0.2 -- The monster hit is attack × (1 ± this numb
 
 -- Health is 6 hits of the fitting material. A fitting sword takes at most 90 damage.
 Config.Monsters = {
-	{ name = "Slime", level = 1, health = 30, attack = 6, gold = 15 },
-	{ name = "Rat King", level = 2, health = 48, attack = 7, gold = 30 },
-	{ name = "Goblin", level = 3, health = 72, attack = 8, gold = 55 },
-	{ name = "Wolf", level = 4, health = 108, attack = 9, gold = 90 },
-	{ name = "Orc", level = 5, health = 156, attack = 10, gold = 140 },
-	{ name = "Troll", level = 6, health = 216, attack = 11, gold = 210 },
-	{ name = "Wraith", level = 7, health = 300, attack = 12, gold = 320 },
-	{ name = "Stone Golem", level = 8, health = 420, attack = 13, gold = 480 },
-	{ name = "Demon", level = 9, health = 600, attack = 14, gold = 720 },
-	{ name = "Elder Dragon", level = 10, health = 900, attack = 15, gold = 1500, boss = true },
+	{ name = "Slime", icon = "💧", level = 1, health = 30, attack = 6, gold = 15 },
+	{ name = "Rat King", icon = "🐀", level = 2, health = 48, attack = 7, gold = 30 },
+	{ name = "Goblin", icon = "👺", level = 3, health = 72, attack = 8, gold = 55 },
+	{ name = "Wolf", icon = "🐺", level = 4, health = 108, attack = 9, gold = 90 },
+	{ name = "Orc", icon = "👹", level = 5, health = 156, attack = 10, gold = 140 },
+	{ name = "Troll", icon = "🤢", level = 6, health = 216, attack = 11, gold = 210 },
+	{ name = "Wraith", icon = "👻", level = 7, health = 300, attack = 12, gold = 320 },
+	{ name = "Stone Golem", icon = "🗿", level = 8, health = 420, attack = 13, gold = 480 },
+	{ name = "Demon", icon = "😈", level = 9, health = 600, attack = 14, gold = 720 },
+	{ name = "Elder Dragon", icon = "🐉", level = 10, health = 900, attack = 15, gold = 1500, boss = true },
 }
 
 -- Requests for each second, and the largest burst.
