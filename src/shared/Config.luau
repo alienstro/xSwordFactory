@@ -138,17 +138,18 @@ Config.PlayerHealth = 100
 Config.SpecialCooldown = 3
 Config.MonsterAttackSpread = 0.2 -- The monster hit is attack × (1 ± this number).
 
+-- Health is 6 hits of the fitting material. A fitting sword takes at most 90 damage.
 Config.Monsters = {
 	{ name = "Slime", level = 1, health = 30, attack = 6, gold = 15 },
-	{ name = "Rat King", level = 2, health = 50, attack = 8, gold = 30 },
-	{ name = "Goblin", level = 3, health = 80, attack = 10, gold = 55 },
-	{ name = "Wolf", level = 4, health = 120, attack = 11, gold = 90 },
-	{ name = "Orc", level = 5, health = 180, attack = 12, gold = 140 },
-	{ name = "Troll", level = 6, health = 260, attack = 13, gold = 210 },
-	{ name = "Wraith", level = 7, health = 360, attack = 14, gold = 320 },
-	{ name = "Stone Golem", level = 8, health = 500, attack = 15, gold = 480 },
-	{ name = "Demon", level = 9, health = 700, attack = 16, gold = 720 },
-	{ name = "Elder Dragon", level = 10, health = 1100, attack = 18, gold = 1500, boss = true },
+	{ name = "Rat King", level = 2, health = 48, attack = 7, gold = 30 },
+	{ name = "Goblin", level = 3, health = 72, attack = 8, gold = 55 },
+	{ name = "Wolf", level = 4, health = 108, attack = 9, gold = 90 },
+	{ name = "Orc", level = 5, health = 156, attack = 10, gold = 140 },
+	{ name = "Troll", level = 6, health = 216, attack = 11, gold = 210 },
+	{ name = "Wraith", level = 7, health = 300, attack = 12, gold = 320 },
+	{ name = "Stone Golem", level = 8, health = 420, attack = 13, gold = 480 },
+	{ name = "Demon", level = 9, health = 600, attack = 14, gold = 720 },
+	{ name = "Elder Dragon", level = 10, health = 900, attack = 15, gold = 1500, boss = true },
 }
 
 -- Requests for each second, and the largest burst.

@@ -6,5 +6,6 @@ require("./Config.spec")
 require("./Odds.spec")
 require("./Sword.spec")
 require("./Forge.spec")
+require("./Fight.spec")
 
 process.exit(if Harness.summary() then 0 else 1)
