@@ -60,7 +60,8 @@ function Forge.pityTable(upgrades: Upgrades): { Odds.Row }
 	return Odds.build(entries, Forge.mult(upgrades, "Luck"), Config.MinRest)
 end
 
-local function owned(sword: { enchants: { Sword.Enchant } }): { [string]: boolean }
+-- The set of enchantment ids that the sword has.
+function Forge.owned(sword: { enchants: { Sword.Enchant } }): { [string]: boolean }
 	local set = {}
 	for _, e in sword.enchants do
 		set[e.id] = true
@@ -70,7 +71,7 @@ end
 
 -- Rolls one enchantment that the sword does not have yet. Returns nil if none is left.
 function Forge.rollEnchant(upgrades: Upgrades, sword: { enchants: { Sword.Enchant } }, rng: Odds.Rng): Sword.Enchant?
-	local rows = Forge.enchantTable(upgrades, owned(sword))
+	local rows = Forge.enchantTable(upgrades, Forge.owned(sword))
 	if #rows == 0 then
 		return nil
 	end
