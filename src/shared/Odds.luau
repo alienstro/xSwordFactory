@@ -8,6 +8,7 @@ export type Rng = { NextNumber: (self: any) -> number }
 local Odds = {}
 
 local TIER_LIMITS = { 10, 100, 1000, 10000, 100000 }
+local TIER_NAMES = { "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic" }
 
 -- Builds a table of chances. `mult` multiplies each rare entry.
 -- The rest entry gets the remaining chance, but never less than `minRest`.
@@ -105,6 +106,16 @@ function Odds.tier(n: number): number
 		end
 	end
 	return tier
+end
+
+-- The name of the colour tier of a "1 in N" value.
+function Odds.tierName(n: number): string
+	return TIER_NAMES[Odds.tier(n)]
+end
+
+-- "1 slot", "2 slots".
+function Odds.plural(count: number, word: string): string
+	return `{count} {word}{if count == 1 then "" else "s"}`
 end
 
 return Odds
