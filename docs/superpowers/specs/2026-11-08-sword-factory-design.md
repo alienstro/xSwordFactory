@@ -61,10 +61,10 @@ The first version fails if one of these is true, even if it works:
 ## 5. Constraints
 
 - The platform is Roblox. The language is Luau. **(Owner)**
-- The code is in files in `~/Projects/xSwordFactory`. Rojo 7.7.1 syncs the
-  files into Studio, and git tracks them. **(Owner)**
-- Rojo syncs only `ReplicatedStorage.Shared`, `ServerScriptService.Server`, and
-  `StarterPlayerScripts.Client`. Rojo must not change the Workspace or the
+- The code is in files in `~/Projects/xSwordFactory`. Studio Script Sync syncs
+  the files with Studio in both directions, and git tracks them. **(Owner)**
+- Script Sync syncs only `ReplicatedStorage.Shared`, `ServerScriptService.Server`,
+  and `StarterPlayerScripts.Client`. It must not change the Workspace or the
   Lighting. **(My call)**
 - The server owns all game state and all random rolls. The client only sends
   the button that the player clicked, and it shows the result. **(My call,
@@ -78,7 +78,7 @@ The first version fails if one of these is true, even if it works:
 
 **(My call)** One full-screen menu with:
 
-- A top bar that shows the gold and a **Help** button.
+- A top bar that shows the gold, a **Help** button, and a **Settings** button.
 - Four tabs: **Forge**, **Swords**, **Upgrades**, and **Fight**.
 
 ### 6.1 The guide
@@ -89,6 +89,21 @@ The first version fails if one of these is true, even if it works:
   enhance the sword → enchant the sword.
 - The player can skip the guide. The **Help** button starts it again.
 - The game saves that the player finished the guide.
+
+### 6.2 Settings
+
+- The **Settings** button opens a sheet with two on/off switches: **Music**
+  and **Sound effects**. Both are on for a new player.
+- The music is one quiet track that loops. When the music is off, the track
+  pauses. When the music comes on again, it fades in.
+- The server saves the settings, so they stay for the next visit.
+
+### 6.3 Auto forge and auto delete
+
+See `2026-11-08-auto-forge-design.md`. In short: an **Auto** switch next to
+FORGE forges again and again until a stop condition is true. The **Auto rules**
+sheet holds the Stop at tier and the auto delete filters. The server deletes a
+new sword that matches a Delete filter and no Keep filter.
 
 ## 7. The forge
 
@@ -260,6 +275,21 @@ A higher level gives a stronger effect.
 - The player can keep a maximum of 50 swords. When the list is full, the
   player cannot forge. **(Tuning)**
 
+### 9.6 Filter and sort the swords
+
+- The **Swords** tab has a **Filter** button and a **Sort** button.
+- The Filter sheet has these groups: rarity tier, material, durability
+  quality, enchantment, damage (at least N), slots (at least N), and
+  favorites only.
+- In one group, a sword needs one of the selected values. A sword needs a
+  match in each group that the player uses.
+- The sorts are Rarity, Damage, and Newest. The equipped sword is always
+  first.
+- The filter and the sort change only the view on the client. They reset when
+  the player joins again.
+- **Salvage all** ignores the filter. Its confirm text says this while a
+  filter is active.
+
 ## 10. Fights
 
 ### 10.1 Monsters
@@ -313,6 +343,8 @@ The game saves, for each player:
 - The pity counter.
 - The unlocked monsters.
 - Whether the player finished the guide.
+- The settings: music on or off, and sound effects on or off.
+- The auto forge rules: the Stop at tier, auto delete on or off, and the Delete and Keep filters.
 
 **(My call, recommended practice)** Use ProfileStore. ProfileStore locks a
 session, so a quick rejoin to a second server cannot overwrite the data.

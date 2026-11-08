@@ -25,17 +25,15 @@ local function equipped(data)
 	return nil
 end
 
--- A round portrait with the monster emoji.
+-- A flat tile with the monster emoji.
 local function portrait(parent: Instance, monster, size: number, props: { [string]: any }?): Frame
 	local p = props or {}
+	p.Name = p.Name or "Portrait"
 	p.Size = UDim2.fromOffset(size, size)
-	p.BackgroundColor3 = if monster.boss then Color3.fromRGB(110, 30, 50) else Theme.PanelLight
+	p.BackgroundColor3 = if monster.boss then Theme.DangerSurface else Theme.Raised
 	p.BorderSizePixel = 0
 	p.Parent = parent
-	local frame = W.new("Frame", p, {
-		W.corner(size // 2),
-		W.stroke(if monster.boss then Theme.Bad else Theme.Button, 3),
-	})
+	local frame = W.new("Frame", p, { W.corner(Theme.Radius.Control) })
 	W.label({
 		Text = monster.icon or "?",
 		TextSize = math.floor(size * 0.55),
@@ -50,10 +48,9 @@ end
 local function floatText(parent: GuiObject, text: string, color: Color3)
 	local label = W.label({
 		Text = text,
-		Font = Theme.FontDisplay,
-		TextSize = 30,
+		Font = Theme.FontMono,
+		TextSize = Theme.TextSize.Title,
 		TextColor3 = color,
-		TextStrokeTransparency = 0.3,
 		TextXAlignment = Enum.TextXAlignment.Center,
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0.5 + (math.random() - 0.5) * 0.4, 0.4),
@@ -61,52 +58,56 @@ local function floatText(parent: GuiObject, text: string, color: Color3)
 		ZIndex = 20,
 		Parent = parent,
 	})
-	W.tween(label, 0.8, { Position = label.Position - UDim2.fromOffset(0, 50), TextTransparency = 1, TextStrokeTransparency = 1 })
+	W.tween(label, 0.8, { Position = label.Position - UDim2.fromOffset(0, 32), TextTransparency = 1 })
 	task.delay(0.85, function()
 		label:Destroy()
 	end)
 end
 
 function FightTab.create(page: Frame, ctx: any)
-	local column = W.new("Frame", {
-		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.fromScale(0.5, 0),
-		Size = UDim2.new(1, -28, 1, 0),
-		BackgroundTransparency = 1,
-		Parent = page,
-	}, { W.maxWidth(560) })
+	local column = W.column(page)
 
 	---------------------------------------------------------------- The monster list.
-	local listView = W.new("Frame", { BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), Parent = column })
-	local swordCard = W.card({ Position = UDim2.fromOffset(0, 6), Parent = listView })
-	local swordLabel = W.label({ Text = "", TextSize = 17, Parent = swordCard })
-	local monsterScroll = W.scroll({ Size = UDim2.new(1, 0, 1, -86), Position = UDim2.fromOffset(0, 86), Parent = listView })
-	W.list(10).Parent = monsterScroll
-	W.padding(2, 4).Parent = monsterScroll
+	local listView = W.scroll({ Name = "Monsters", Size = UDim2.fromScale(1, 1), Parent = column })
+	W.list(Theme.Space.M).Parent = listView
+	W.padding(0, Theme.Space.XS).Parent = listView
+	local _, swordBody, setSwordAccent = W.accentCard({ Name = "Equipped", Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, LayoutOrder = 1, Parent = listView })
+	W.list(Theme.Space.XS).Parent = swordBody
+	local swordCaption = W.caption("Equipped sword", { LayoutOrder = 1, Parent = swordBody })
+	local swordLabel = W.label({ Text = "", Font = Theme.FontDisplay, TextSize = Theme.TextSize.Lead, LayoutOrder = 2, Parent = swordBody })
+	local swordStats = W.label({ Text = "", Font = Theme.FontMono, TextSize = Theme.TextSize.Small, TextColor3 = Theme.Muted, LayoutOrder = 3, Parent = swordBody })
+	local monsterScroll = W.new("Frame", {
+		Name = "List",
+		BackgroundTransparency = 1,
+		Size = UDim2.new(1, 0, 0, 0),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		LayoutOrder = 2,
+		Parent = listView,
+	}, { W.list(Theme.Space.S) })
 
 	---------------------------------------------------------------- The fight view.
 	local fightView = W.new("Frame", { BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), Visible = false, Parent = column })
-	local stage = W.card({ Position = UDim2.fromOffset(0, 6), Parent = fightView })
-	W.list(8, false, Enum.HorizontalAlignment.Center).Parent = stage
+	local stage = W.card({ Name = "Stage", Position = UDim2.fromOffset(0, Theme.Space.XS), Parent = fightView })
+	W.list(Theme.Space.S, false, Enum.HorizontalAlignment.Center).Parent = stage
 	local portraitHolder = W.new("Frame", {
 		BackgroundTransparency = 1,
-		Size = UDim2.new(1, 0, 0, 96),
+		Size = UDim2.new(1, 0, 0, 80),
 		LayoutOrder = 1,
 		Parent = stage,
 	})
 	local monsterName = W.label({
 		Text = "",
 		Font = Theme.FontDisplay,
-		TextSize = 24,
+		TextSize = Theme.TextSize.Title,
 		TextXAlignment = Enum.TextXAlignment.Center,
 		LayoutOrder = 2,
 		Parent = stage,
 	})
 	local _, setMonsterBar = W.bar(Theme.Bad, { LayoutOrder = 3, Parent = stage })
-	W.label({ Text = "VS", Font = Theme.FontDisplay, TextSize = 18, TextColor3 = Theme.Muted, TextXAlignment = Enum.TextXAlignment.Center, LayoutOrder = 4, Parent = stage })
-	local youLabel = W.label({ Text = "You", Font = Theme.FontBold, TextSize = 17, TextXAlignment = Enum.TextXAlignment.Center, LayoutOrder = 5, Parent = stage })
+	W.divider({ LayoutOrder = 4, Parent = stage })
+	local youLabel = W.label({ Text = "You", Font = Theme.FontMedium, TextSize = Theme.TextSize.Small, TextColor3 = Theme.Muted, TextXAlignment = Enum.TextXAlignment.Center, LayoutOrder = 5, Parent = stage })
 	local playerBar, setPlayerBar = W.bar(Theme.Good, { LayoutOrder = 6, Parent = stage })
-	local logLabel = W.label({ Text = "", TextSize = 16, TextColor3 = Theme.Muted, LayoutOrder = 7, Parent = stage })
+	local logLabel = W.label({ Name = "Log", Text = "", Font = Theme.FontMono, TextSize = 13, TextColor3 = Theme.Muted, LayoutOrder = 7, Parent = stage })
 
 	local controls = W.new("Frame", {
 		BackgroundTransparency = 1,
@@ -115,7 +116,7 @@ function FightTab.create(page: Frame, ctx: any)
 		Size = UDim2.new(1, 0, 0, 120),
 		Parent = fightView,
 	})
-	local autoButton = W.button("AUTO: OFF", { Size = UDim2.new(1, 0, 0, 44), TextSize = 17, Parent = controls }, function() end)
+	local autoButton = W.button("Auto: off", { Name = "Auto", variant = "quiet", Size = UDim2.new(1, 0, 0, 44), TextSize = Theme.TextSize.Small, Parent = controls }, function() end)
 	local actionRow = W.new("Frame", {
 		BackgroundTransparency = 1,
 		Position = UDim2.fromOffset(0, 54),
@@ -142,17 +143,23 @@ function FightTab.create(page: Frame, ctx: any)
 		}),
 	})
 	local resultBanner = W.label({
+		Name = "Result",
 		Text = "",
 		Font = Theme.FontDisplay,
-		TextSize = 40,
+		TextSize = 32,
 		TextXAlignment = Enum.TextXAlignment.Center,
-		TextStrokeTransparency = 0.5,
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0.5, 0.42),
+		Size = UDim2.new(0, 0, 0, 0),
+		AutomaticSize = Enum.AutomaticSize.XY,
+		BackgroundTransparency = 0,
+		BackgroundColor3 = Theme.Raised,
 		Visible = false,
 		ZIndex = 30,
 		Parent = fightView,
 	})
+	W.corner(Theme.Radius.Surface).Parent = resultBanner
+	W.padding(Theme.Space.XL, Theme.Space.M).Parent = resultBanner
 
 	---------------------------------------------------------------- Fight logic on the client.
 	local logLines: { string } = {}
@@ -173,9 +180,10 @@ function FightTab.create(page: Frame, ctx: any)
 
 	local function setAuto(on: boolean)
 		auto = on
-		autoButton.Text = if on then "AUTO: ON  ·  tap to stop" else "AUTO: OFF"
-		W.setColor(autoButton, if on then Theme.Good else Theme.Button)
-		autoButton.TextColor3 = if on then Theme.Background else Theme.Text
+		autoButton.Text = if on then "Auto: on  ·  tap to stop" else "Auto: off"
+		W.setVariant(autoButton, if on then "secondary" else "quiet")
+		autoButton:SetAttribute("TextColor", if on then Theme.Good else nil)
+		W.setEnabled(autoButton, true)
 	end
 
 	local function startFight(index: number): boolean
@@ -206,7 +214,7 @@ function FightTab.create(page: Frame, ctx: any)
 			if dealt > 0 and monsterPortrait then
 				floatText(monsterPortrait, `-{dealt}`, Theme.Gold)
 				W.shake(monsterPortrait, 6, 0.2)
-				W.sound("Hit", 0.4)
+				W.sound("Hit")
 			end
 			if taken > 0 then
 				floatText(playerBar, `-{taken}`, Theme.Bad)
@@ -215,16 +223,17 @@ function FightTab.create(page: Frame, ctx: any)
 			end
 		end
 		if result.outcome == "win" then
-			resultBanner.Text = `VICTORY!  +{W.number(result.gold)} gold`
-			resultBanner.TextColor3 = Theme.Gold
+			resultBanner.Text = `VICTORY  <font face="RobotoMono" size="20" color="{W.hex(Theme.Gold)}">+{W.number(result.gold)} gold</font>`
+			resultBanner.TextColor3 = Theme.Text
 			resultBanner.Visible = true
-			W.pop(resultBanner, 0.5)
-			W.sound("Win", 0.5)
+			W.pop(resultBanner, 0.9)
+			W.sound("Win")
 		elseif result.outcome == "lose" then
 			resultBanner.Text = "DEFEAT"
 			resultBanner.TextColor3 = Theme.Bad
 			resultBanner.Visible = true
-			W.pop(resultBanner, 0.5)
+			W.pop(resultBanner, 0.9)
+			W.sound("Lose")
 		elseif result.outcome == "fled" then
 			resultBanner.Visible = false
 		end
@@ -280,7 +289,7 @@ function FightTab.create(page: Frame, ctx: any)
 	end)
 
 	local function actionButton(text: string, order: number, action: string, primary: boolean?): TextButton
-		return W.button(text, { LayoutOrder = order, primary = primary, TextSize = 17, Parent = actionRow }, function()
+		return W.button(text, { Name = action, LayoutOrder = order, variant = if primary then "primary" else "secondary", TextSize = Theme.TextSize.Body, Parent = actionRow }, function()
 			if auto then
 				setAuto(false)
 			end
@@ -294,7 +303,7 @@ function FightTab.create(page: Frame, ctx: any)
 	ctx.targets.AttackButton = attackButton
 	ctx.targets.AutoButton = autoButton
 
-	W.button("Fight again", { LayoutOrder = 1, primary = true, Parent = endRow }, function()
+	W.button("Fight again", { LayoutOrder = 1, variant = "primary", Parent = endRow }, function()
 		ctx.request("LeaveFight")
 		startFight(lastMonster)
 	end)
@@ -311,52 +320,85 @@ function FightTab.create(page: Frame, ctx: any)
 		local sword = equipped(data)
 		if sword then
 			local rarity = Sword.rarity(sword)
-			local broken = if sword.durability <= 0
-				then `\n<font color="{W.hex(Theme.Bad)}">Your sword is broken. Repair it in the Swords tab.</font>`
-				else ""
-			swordLabel.Text = `Your sword: <b><font color="{W.hex(Theme.tierColor(rarity))}">{Sword.name(sword)}</font></b>\nDamage {math.floor(Sword.damage(sword) + 0.5)}  ·  Durability {sword.durability}/{sword.maxDurability}{broken}`
+			local color = Theme.tierColor(rarity)
+			setSwordAccent(color)
+			swordCaption.Text = "EQUIPPED SWORD"
+			swordLabel.Text = string.upper(Sword.name(sword))
+			swordLabel.TextColor3 = Theme.Text
+			local broken = if sword.durability <= 0 then `  ·  <font color="{W.hex(Theme.Bad)}">BROKEN, REPAIR IT</font>` else ""
+			swordStats.Text = `{Odds.format(rarity)}  ·  DMG {math.floor(Sword.damage(sword) + 0.5)}  ·  DUR {sword.durability}/{sword.maxDurability}{broken}`
+			swordStats.Font = Theme.FontMono -- numbers line up in the mono font
+			swordStats.Visible = true
 		else
-			swordLabel.Text = `<font color="{W.hex(Theme.Bad)}">Equip a sword in the Swords tab first.</font>`
+			setSwordAccent(Theme.Bad)
+			swordCaption.Text = "NO SWORD EQUIPPED"
+			swordLabel.Text = "EQUIP A SWORD FIRST"
+			swordLabel.TextColor3 = Theme.Muted
+			swordStats.Text = "Open the Swords tab, tap a sword, then tap Equip."
+			swordStats.Font = Theme.Font -- a sentence reads better in the body font
+			swordStats.Visible = true
 		end
 
 		W.clear(monsterScroll)
 		ctx.targets.FirstMonster = nil
 		for i, m in Config.Monsters do
 			local locked = i > data.unlocked
-			local card = W.card({ Size = UDim2.new(1, 0, 0, 84), LayoutOrder = i, Parent = monsterScroll })
-			if m.boss then
-				W.stroke(Theme.Bad, 2).Parent = card
+			local card = W.new("Frame", {
+				Name = m.name,
+				BackgroundColor3 = Theme.Surface,
+				BackgroundTransparency = if locked then 0.5 else 0,
+				BorderSizePixel = 0,
+				Size = UDim2.new(1, 0, 0, if locked then 56 else 68),
+				LayoutOrder = i,
+				Parent = monsterScroll,
+			}, { W.corner(Theme.Radius.Surface), W.padding(Theme.Space.M) })
+			local tileSize = if locked then 32 else 44
+			local tile = portrait(card, m, tileSize, { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.fromScale(0, 0.5) })
+			if locked then
+				tile.BackgroundTransparency = 0.5
+				local glyph = tile:FindFirstChildOfClass("TextLabel") :: TextLabel
+				glyph.TextTransparency = 0.6
 			end
-			portrait(card, m, 56, { Position = UDim2.fromOffset(0, 0) })
+			local textBox = W.new("Frame", {
+				BackgroundTransparency = 1,
+				Position = UDim2.fromOffset(tileSize + Theme.Space.M, 0),
+				Size = UDim2.new(1, -(tileSize + Theme.Space.M + 120), 1, 0),
+				Parent = card,
+			}, { W.list(2) })
+			textBox.UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
 			W.label({
-				Text = if locked then `🔒 {m.name}` else `{m.name}{if m.boss then "  ·  BOSS" else ""}`,
+				Text = string.upper(m.name) .. (if m.boss and not locked then `  <font face="BuilderSans" weight="bold" size="12" color="{W.hex(Theme.Bad)}">BOSS</font>` else ""),
 				Font = Theme.FontDisplay,
-				TextSize = 19,
-				TextColor3 = if locked then Theme.Muted else Theme.Text,
-				Size = UDim2.new(1, -190, 0, 26),
-				Position = UDim2.fromOffset(68, 2),
+				TextSize = if locked then Theme.TextSize.Body else Theme.TextSize.Lead,
+				TextColor3 = if locked then Theme.Faint else Theme.Text,
+				Size = UDim2.new(1, 0, 0, 22),
+				AutomaticSize = Enum.AutomaticSize.None,
 				TextTruncate = Enum.TextTruncate.AtEnd,
 				TextWrapped = false,
-				Parent = card,
+				LayoutOrder = 1,
+				Parent = textBox,
 			})
 			W.label({
 				Text = if locked
-					then `Win against the {Config.Monsters[i - 1].name} first.`
-					else `Level {m.level}  ·  {m.health} health  ·  {W.number(m.gold)} gold`,
-				TextSize = 14,
-				TextColor3 = Theme.Muted,
-				Size = UDim2.new(1, -190, 0, 20),
-				Position = UDim2.fromOffset(68, 30),
-				Parent = card,
+					then `Locked. Win against the {Config.Monsters[i - 1].name} first.`
+					else `LV {m.level}  ·  {m.health} HP  ·  <font color="{W.hex(Theme.Gold)}">{W.number(m.gold)} GOLD</font>`,
+				Font = if locked then Theme.Font else Theme.FontMono,
+				TextSize = if locked then Theme.TextSize.Small else 13,
+				TextColor3 = if locked then Theme.Faint else Theme.Muted,
+				TextWrapped = false,
+				TextTruncate = Enum.TextTruncate.AtEnd,
+				Size = UDim2.new(1, 0, 0, 18),
+				AutomaticSize = Enum.AutomaticSize.None,
+				LayoutOrder = 2,
+				Parent = textBox,
 			})
 			if not locked then
-				local fight = W.button("FIGHT", {
-					primary = true,
+				local fight = W.button("Fight", {
+					Name = "Fight",
 					AnchorPoint = Vector2.new(1, 0.5),
 					Position = UDim2.new(1, 0, 0.5, 0),
-					Size = UDim2.fromOffset(108, 48),
-					Font = Theme.FontDisplay,
-					TextSize = 20,
+					Size = UDim2.fromOffset(96, 40),
+					TextSize = Theme.TextSize.Body,
 					Parent = card,
 				}, function()
 					startFight(i)
@@ -373,12 +415,12 @@ function FightTab.create(page: Frame, ctx: any)
 		if shownMonster ~= f.monsterIndex or not monsterPortrait or not monsterPortrait.Parent then
 			shownMonster = f.monsterIndex
 			W.clear(portraitHolder)
-			monsterPortrait = portrait(portraitHolder, Config.Monsters[f.monsterIndex], 96, {
+			monsterPortrait = portrait(portraitHolder, Config.Monsters[f.monsterIndex], 80, {
 				AnchorPoint = Vector2.new(0.5, 0),
 				Position = UDim2.fromScale(0.5, 0),
 			})
 		end
-		monsterName.Text = `{f.monsterName}  <font color="{W.hex(Theme.Muted)}">level {f.monsterLevel}</font>`
+		monsterName.Text = `{string.upper(f.monsterName)}  <font face="RobotoMono" size="14" color="{W.hex(Theme.Faint)}">LV {f.monsterLevel}</font>`
 		setMonsterBar(f.monsterHealth / f.monsterMaxHealth, `{f.monsterHealth}/{f.monsterMaxHealth}`)
 		setPlayerBar(f.playerHealth / f.playerMaxHealth, `{f.playerHealth}/{f.playerMaxHealth}`)
 		local sword = equipped(data)

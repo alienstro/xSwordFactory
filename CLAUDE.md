@@ -6,26 +6,33 @@ Read the design before you change game behavior.
 
 ## Tools
 
-- **Rojo** syncs the repo into Studio. Rokit pins the version in `rokit.toml`.
+- **Studio Script Sync** syncs the scripts in Studio with the files in `src/`, in both directions. It is built into Studio. No server runs.
 - **Roblox Studio MCP** connects the agent to the open Studio place "Sword Factory".
-- These two tools do different jobs. Use both.
+- **Rokit** pins Lune in `rokit.toml`.
+- Script Sync and MCP do different jobs. Use both.
 
 ## Source of truth
 
-- The repo is the source of truth for all scripts.
-- `default.project.json` maps the folders:
-  - `src/shared` → `ReplicatedStorage.Shared`
-  - `src/server` → `ServerScriptService.Server`
-  - `src/client` → `StarterPlayer.StarterPlayerScripts.Client`
-- Write and change scripts only in the repo files.
-- Do not edit scripts in Studio through MCP. Git does not record that change, and the next Rojo sync can overwrite it.
+- The repo is the source of truth for all scripts. Git tracks them.
+- Script Sync maps the folders. Each instance is synced into `src/`, and Script Sync adds the instance name as a folder (see `README.md`):
+  - `src/Shared` → `ReplicatedStorage.Shared`
+  - `src/Server` → `ServerScriptService.Server`
+  - `src/Client` → `StarterPlayer.StarterPlayerScripts.Client`
+- The file name sets the script type. Do not change these names:
+  - `Name.luau` → `ModuleScript`
+  - `src/Server/init.legacy.luau` → `Script` with `RunContext` = `Legacy`
+  - `src/Client/init.local.luau` → `LocalScript`
+- Write and change scripts only in the repo files with the file tools.
+- Do not edit scripts in Studio through MCP. Script Sync copies that edit to disk, but large MCP edits fail more often and are hard to review.
+- Do not give a synced script an attribute or a tag. Script Sync ignores them, and data can get lost.
+- Do not put non-script instances in a synced folder. Script Sync syncs only `Script`, `LocalScript`, `ModuleScript`, and `Folder`.
 
 ## Workflow
 
 1. Change the code in `src/`.
-2. Make sure that `rojo serve` runs. Start it only if no process listens on port 34872.
-3. Make sure that the Rojo plugin in Studio is connected. If it is not, ask the user to click **Connect**.
-4. Use Studio MCP to start a playtest, click the UI, take screenshots, and read the console.
+2. Make sure that Script Sync is on. With MCP, compare one changed script in the Edit data model with the file on disk.
+3. If Script Sync is off, ask the user to start it. If Studio shows the conflict dialog, tell the user to click **Keep Disk**.
+4. A running playtest keeps the old code. Stop it, then use Studio MCP to start a new playtest, click the UI, take screenshots, and read the console.
 5. Stop the playtest and stop each process that you started.
 
 ## Studio MCP
@@ -36,7 +43,7 @@ Read the design before you change game behavior.
 
 ## Tests
 
-- Keep the game logic in pure modules in `src/shared`. These modules do not call Roblox services.
+- Keep the game logic in pure modules in `src/Shared`. These modules do not call Roblox services.
 - Pure modules require siblings with `require("./Name")`. The same path works in Roblox and in Lune.
 - Give each chance roll a random source with `NextNumber()`. In Roblox, use `Random.new()`. In tests, use `Harness.rng(seed)` or `Harness.fixedRng({...})`.
 - Run the unit tests with Lune: `lune run tests/run`. Add each new spec file to `tests/run.luau`.

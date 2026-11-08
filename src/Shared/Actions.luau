@@ -8,6 +8,7 @@ local Odds = require("./Odds")
 local Sword = require("./Sword")
 local Forge = require("./Forge")
 local Fight = require("./Fight")
+local AutoDelete = require("./AutoDelete")
 
 export type Data = {
 	gold: number,
@@ -18,7 +19,11 @@ export type Data = {
 	pity: number,
 	unlocked: number,
 	guideDone: boolean,
+	settings: Settings,
+	autoForge: AutoDelete.Rules,
 }
+-- Player choices. Each key is an on/off switch.
+export type Settings = { music: boolean, effects: boolean }
 export type Session = { fight: Fight.State? }
 export type Result = { ok: boolean, err: string?, [string]: any }
 
@@ -34,6 +39,8 @@ function Actions.newData(): Data
 		pity = 0,
 		unlocked = 1,
 		guideDone = false,
+		settings = { music = true, effects = true },
+		autoForge = AutoDelete.newRules(),
 	}
 end
 
@@ -84,6 +91,12 @@ function handlers.Forge(data, _session, _args, rng)
 	data.gold -= Config.ForgeCost
 	data.nextSwordId += 1
 	data.pity = pity
+	-- Auto delete checks only the new sword. Old data can lack the rules, so check for them.
+	if data.autoForge and AutoDelete.shouldDelete(data.autoForge, sword) then
+		local value = Sword.salvageValue(sword)
+		data.gold += value
+		return { ok = true, sword = sword, autoDeleted = { gold = value } }
+	end
 	table.insert(data.swords, sword)
 	return { ok = true, sword = sword }
 end
@@ -299,6 +312,24 @@ end
 
 function handlers.FinishGuide(data, _session, _args, _rng)
 	data.guideDone = true
+	return { ok = true }
+end
+
+-- Turns one setting on or off. args: { key = "music" | "effects", on = boolean }.
+function handlers.SetSetting(data, _session, args, _rng)
+	if args.key ~= "music" and args.key ~= "effects" then
+		return fail("Unknown setting.")
+	end
+	if type(args.on) ~= "boolean" then
+		return fail("Bad request.")
+	end
+	data.settings[args.key] = args.on
+	return { ok = true }
+end
+
+-- Saves the auto forge rules. args: { rules = AutoDelete.Rules }. The rules are cleaned first.
+function handlers.SetAutoForge(data, _session, args, _rng)
+	data.autoForge = AutoDelete.clean(args.rules)
 	return { ok = true }
 end
 

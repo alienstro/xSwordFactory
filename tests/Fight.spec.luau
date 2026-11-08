@@ -1,6 +1,6 @@
 local H = require("./Harness")
-local Fight = require("../src/shared/Fight")
-local Config = require("../src/shared/Config")
+local Fight = require("../src/Shared/Fight")
+local Config = require("../src/Shared/Config")
 local describe, it, expect = H.describe, H.it, H.expect
 
 local function sword(material: string, enchants)

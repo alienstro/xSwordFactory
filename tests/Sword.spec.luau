@@ -1,5 +1,5 @@
 local H = require("./Harness")
-local Sword = require("../src/shared/Sword")
+local Sword = require("../src/Shared/Sword")
 local describe, it, expect = H.describe, H.it, H.expect
 
 local function mithril()

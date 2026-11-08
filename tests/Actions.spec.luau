@@ -1,7 +1,7 @@
 local H = require("./Harness")
-local Actions = require("../src/shared/Actions")
-local RateLimit = require("../src/shared/RateLimit")
-local Config = require("../src/shared/Config")
+local Actions = require("../src/Shared/Actions")
+local RateLimit = require("../src/Shared/RateLimit")
+local Config = require("../src/Shared/Config")
 local describe, it, expect = H.describe, H.it, H.expect
 
 local ZERO = H.fixedRng({ 0 })
@@ -250,6 +250,86 @@ describe("RateLimit", function()
 		end
 		expect(allowed).toBe(15)
 		expect(RateLimit.allow(bucket, 101)).toBe(true)
+	end)
+end)
+
+describe("Settings", function()
+	it("a new player has music and sound effects on", function()
+		local data = setup()
+		expect(data.settings.music).toBe(true)
+		expect(data.settings.effects).toBe(true)
+	end)
+
+	it("SetSetting turns music off and on again", function()
+		local data, session = setup()
+		expect(Actions.run(data, session, "SetSetting", { key = "music", on = false }, ZERO).ok).toBe(true)
+		expect(data.settings.music).toBe(false)
+		expect(data.settings.effects).toBe(true)
+		Actions.run(data, session, "SetSetting", { key = "music", on = true }, ZERO)
+		expect(data.settings.music).toBe(true)
+	end)
+
+	it("SetSetting rejects an unknown setting", function()
+		local data, session = setup()
+		local r = Actions.run(data, session, "SetSetting", { key = "gold", on = false }, ZERO)
+		expect(r.ok).toBe(false)
+		expect(data.settings.gold).toBe(nil)
+	end)
+
+	it("SetSetting rejects a value that is not true or false", function()
+		local data, session = setup()
+		local r = Actions.run(data, session, "SetSetting", { key = "effects", on = "no" }, ZERO)
+		expect(r.ok).toBe(false)
+		expect(data.settings.effects).toBe(true)
+	end)
+end)
+
+describe("Auto forge rules", function()
+	it("a new player has auto delete off and Stop at Never", function()
+		local data = setup()
+		expect(data.autoForge.deleteOn).toBe(false)
+		expect(data.autoForge.stopTier).toBe(0)
+	end)
+
+	it("SetAutoForge saves clean rules", function()
+		local data, session = setup()
+		local r = Actions.run(data, session, "SetAutoForge", {
+			rules = { stopTier = 3, deleteOn = true, delete = { materials = { "Wood", "Plastic" } } },
+		}, ZERO)
+		expect(r.ok).toBe(true)
+		expect(data.autoForge.stopTier).toBe(3)
+		expect(data.autoForge.deleteOn).toBe(true)
+		expect(data.autoForge.delete.materials).toEqual({ "Wood" })
+	end)
+
+	it("Forge auto deletes a matching sword and gives salvage gold", function()
+		local data, session = setup()
+		data.autoForge.deleteOn = true
+		data.autoForge.delete.materials = { "Wood" }
+		local goldBefore = data.gold
+		local r = Actions.run(data, session, "Forge", {}, ZERO)
+		expect(r.ok).toBe(true)
+		expect(r.sword.material).toBe("Wood")
+		expect(#data.swords).toBe(0)
+		expect(r.autoDeleted.gold).toBeAtLeast(1)
+		expect(data.gold).toBe(goldBefore - Config.ForgeCost + r.autoDeleted.gold)
+	end)
+
+	it("Forge keeps a sword that does not match", function()
+		local data, session = setup()
+		data.autoForge.deleteOn = true
+		data.autoForge.delete.materials = { "Iron" }
+		local r = Actions.run(data, session, "Forge", {}, ZERO)
+		expect(r.autoDeleted).toBe(nil)
+		expect(#data.swords).toBe(1)
+	end)
+
+	it("Forge with old data that has no autoForge still works", function()
+		local data, session = setup()
+		data.autoForge = nil :: any
+		local r = Actions.run(data, session, "Forge", {}, ZERO)
+		expect(r.ok).toBe(true)
+		expect(#data.swords).toBe(1)
 	end)
 end)
 

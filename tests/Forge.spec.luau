@@ -1,6 +1,6 @@
 local H = require("./Harness")
-local Forge = require("../src/shared/Forge")
-local Config = require("../src/shared/Config")
+local Forge = require("../src/Shared/Forge")
+local Config = require("../src/Shared/Config")
 local describe, it, expect = H.describe, H.it, H.expect
 
 local NO_UPGRADES = { Luck = 0, Slots = 0, Durability = 0 }

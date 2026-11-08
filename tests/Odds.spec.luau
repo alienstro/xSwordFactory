@@ -1,5 +1,5 @@
 local H = require("./Harness")
-local Odds = require("../src/shared/Odds")
+local Odds = require("../src/Shared/Odds")
 local describe, it, expect = H.describe, H.it, H.expect
 
 local entries = {

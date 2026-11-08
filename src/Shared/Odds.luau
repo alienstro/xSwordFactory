@@ -108,6 +108,9 @@ function Odds.tier(n: number): number
 	return tier
 end
 
+-- The names of the tiers, from 1 (Common) to 6 (Mythic).
+Odds.TierNames = TIER_NAMES
+
 -- The name of the colour tier of a "1 in N" value.
 function Odds.tierName(n: number): string
 	return TIER_NAMES[Odds.tier(n)]

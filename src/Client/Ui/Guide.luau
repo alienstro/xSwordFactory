@@ -2,7 +2,6 @@
 -- The guide: a small tooltip next to the button that the player must tap next.
 
 local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
 
 local Theme = require(script.Parent.Theme) :: any
 local W = require(script.Parent.Widgets) :: any
@@ -152,19 +151,20 @@ end
 
 function Guide.create(ctx: any)
 	tooltip = W.new("Frame", {
+		Name = "GuideTip",
 		Size = UDim2.fromOffset(TOOLTIP_WIDTH, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
-		BackgroundColor3 = Color3.fromRGB(46, 28, 70),
+		BackgroundColor3 = Theme.Raised,
 		BorderSizePixel = 0,
 		Visible = false,
 		ZIndex = 75,
 		Parent = ctx.root,
-	}, { W.corner(14), W.padding(12), W.stroke(Theme.Gold, 2), W.list(8) })
-	stepLabel = W.label({ Text = "", Font = Theme.FontBold, TextSize = 13, TextColor3 = Theme.Gold, LayoutOrder = 1, ZIndex = 76, Parent = tooltip })
-	textLabel = W.label({ Text = "", TextSize = 17, LayoutOrder = 2, ZIndex = 76, Parent = tooltip })
+	}, { W.corner(Theme.Radius.Surface), W.padding(Theme.Space.L - 2), W.stroke(Theme.Line, 1), W.list(Theme.Space.S) })
+	stepLabel = W.caption("", { TextColor3 = Theme.Accent, LayoutOrder = 1, ZIndex = 76, Parent = tooltip })
+	textLabel = W.label({ Text = "", TextSize = Theme.TextSize.Body, LayoutOrder = 2, ZIndex = 76, Parent = tooltip })
 	local row = W.new("Frame", {
 		BackgroundTransparency = 1,
-		Size = UDim2.new(1, 0, 0, 40),
+		Size = UDim2.new(1, 0, 0, 36),
 		LayoutOrder = 3,
 		ZIndex = 76,
 		Parent = tooltip,
@@ -173,25 +173,23 @@ function Guide.create(ctx: any)
 			CellSize = UDim2.new(0.5, -4, 1, 0),
 			CellPadding = UDim2.fromOffset(8, 0),
 			SortOrder = Enum.SortOrder.LayoutOrder,
+			HorizontalAlignment = Enum.HorizontalAlignment.Right,
 		}),
 	})
-	W.button("Skip guide", { LayoutOrder = 1, TextSize = 15, ZIndex = 77, Parent = row }, function()
+	W.button("Skip guide", { variant = "quiet", LayoutOrder = 1, TextSize = Theme.TextSize.Small, ZIndex = 77, Parent = row }, function()
 		finish(ctx)
 	end)
-	nextButton = W.button("Next", { LayoutOrder = 2, TextSize = 15, ZIndex = 77, Parent = row }, function()
+	nextButton = W.button("Next", { LayoutOrder = 2, BackgroundColor3 = Theme.Line, TextSize = Theme.TextSize.Small, ZIndex = 77, Parent = row }, function()
 		advance(ctx)
 	end)
 
+	-- A still ring around the target. It does not pulse, so it does not pull the eye all the time.
 	stroke = W.new("UIStroke", {
-		Color = Theme.Gold,
-		Thickness = 4,
+		Name = "GuideRing",
+		Color = Theme.Accent,
+		Thickness = 2,
 		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 	})
-	TweenService:Create(
-		stroke,
-		TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
-		{ Transparency = 0.8 }
-	):Play()
 
 	table.insert(ctx.listeners, function(name: string, _args, result)
 		if current == 0 or not result.ok then

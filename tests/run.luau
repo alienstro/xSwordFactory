@@ -8,5 +8,7 @@ require("./Sword.spec")
 require("./Forge.spec")
 require("./Fight.spec")
 require("./Actions.spec")
+require("./AutoDelete.spec")
+require("./SwordFilter.spec")
 
 process.exit(if Harness.summary() then 0 else 1)

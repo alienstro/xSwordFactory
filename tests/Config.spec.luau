@@ -1,5 +1,5 @@
 local H = require("./Harness")
-local Config = require("../src/shared/Config")
+local Config = require("../src/Shared/Config")
 local describe, it, expect = H.describe, H.it, H.expect
 
 local function restCount(entries): number
