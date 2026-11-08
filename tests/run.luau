@@ -4,5 +4,6 @@ local Harness = require("./Harness")
 
 require("./Config.spec")
 require("./Odds.spec")
+require("./Sword.spec")
 
 process.exit(if Harness.summary() then 0 else 1)
