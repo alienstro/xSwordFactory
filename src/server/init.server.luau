@@ -13,6 +13,9 @@ local ProfileStore = require(script:WaitForChild("ProfileStore")) :: any
 
 local STORE_NAME = "PlayerData_v1"
 
+-- The game uses only the menu. No player character spawns.
+Players.CharacterAutoLoads = false
+
 local store = ProfileStore.New(STORE_NAME, Actions.newData())
 local rng = Random.new()
 
