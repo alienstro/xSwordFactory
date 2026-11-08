@@ -13,6 +13,7 @@ export type Sword = {
 	slots: number,
 	enchants: { Enchant },
 	enhance: number,
+	favorite: boolean?, -- A favorite sword cannot be salvaged.
 	-- The "1 in N" value of each rolled part.
 	odds: { material: number, quality: number, slots: number },
 }

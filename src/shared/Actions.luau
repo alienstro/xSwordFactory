@@ -167,10 +167,42 @@ function handlers.Salvage(data, _session, args, _rng)
 	if data.equipped == sword.id then
 		return fail("You cannot salvage the equipped sword.")
 	end
+	if sword.favorite then
+		return fail("Remove the favorite star first.")
+	end
 	local value = Sword.salvageValue(sword)
 	data.gold += value
 	table.remove(data.swords, index)
 	return { ok = true, gold = value }
+end
+
+-- Salvages each sword that is not a favorite and not equipped.
+function handlers.SalvageAll(data, _session, _args, _rng)
+	local kept = {}
+	local count, gold = 0, 0
+	for _, s in data.swords do
+		if s.favorite or s.id == data.equipped then
+			table.insert(kept, s)
+		else
+			count += 1
+			gold += Sword.salvageValue(s)
+		end
+	end
+	if count == 0 then
+		return fail("No sword to salvage. Favorites and the equipped sword stay.")
+	end
+	data.swords = kept
+	data.gold += gold
+	return { ok = true, count = count, gold = gold }
+end
+
+function handlers.Favorite(data, _session, args, _rng)
+	local sword = findSword(data, args)
+	if not sword then
+		return fail("You do not have this sword.")
+	end
+	sword.favorite = if sword.favorite then nil else true
+	return { ok = true, favorite = sword.favorite == true }
 end
 
 function handlers.Upgrade(data, _session, args, _rng)
