@@ -95,8 +95,8 @@ end
 
 function Guide.create(ctx: any)
 	panel = W.panel({
-		AnchorPoint = Vector2.new(1, 1),
-		Position = UDim2.new(1, -16, 1, -80),
+		AnchorPoint = Vector2.new(0, 1),
+		Position = UDim2.new(0, 28, 1, -28),
 		Size = UDim2.new(0, 380, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundColor3 = Color3.fromRGB(40, 34, 28),

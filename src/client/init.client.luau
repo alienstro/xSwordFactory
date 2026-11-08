@@ -137,7 +137,7 @@ local views = {}
 function ctx.selectTab(name: string)
 	for tabName, page in pages do
 		page.Visible = tabName == name
-		tabButtons[tabName].BackgroundColor3 = if tabName == name then Theme.Accent else Theme.Button
+		W.setColor(tabButtons[tabName], if tabName == name then Theme.Accent else Theme.Button)
 		tabButtons[tabName].TextColor3 = if tabName == name then Theme.Background else Theme.Text
 	end
 	ctx.currentTab = name
@@ -201,7 +201,7 @@ local function render()
 	if not state then
 		return
 	end
-	goldLabel.Text = `🪙 {W.number(state.data.gold)} gold`
+	goldLabel.Text = `{W.number(state.data.gold)} gold`
 	for _, view in views do
 		view.update(state)
 	end

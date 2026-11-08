@@ -33,11 +33,11 @@ function ForgeTab.describe(s): { string }
 		local text = def.text:gsub("{p}", tostring(math.floor(p + 0.5))):gsub("{pct}", `{math.floor(p * 100 + 0.5)} %%`)
 		table.insert(
 			lines,
-			`  ✦ <font color="{W.hex(Theme.tierColor(e.oneIn))}">{def.name} {level}</font> ({Odds.format(e.oneIn)}): {text}`
+			`  + <font color="{W.hex(Theme.tierColor(e.oneIn))}">{def.name} {level}</font> ({Odds.format(e.oneIn)}): {text}`
 		)
 	end
 	for _ = #s.enchants + 1, s.slots do
-		table.insert(lines, `  ○ <font color="{W.hex(Theme.Muted)}">Empty slot</font>`)
+		table.insert(lines, `  - <font color="{W.hex(Theme.Muted)}">Empty slot</font>`)
 	end
 	return lines
 end

@@ -82,13 +82,14 @@ function W.button(text: string, props: { [string]: any }, onClick: () -> ()): Te
 	p.Text = text
 	p.Size = p.Size or UDim2.new(1, 0, 0, 44)
 	local button = W.new("TextButton", p, { W.corner(8) })
+	button:SetAttribute("BaseColor", color)
 	button.MouseEnter:Connect(function()
 		if button.Active then
-			button.BackgroundColor3 = color:Lerp(Color3.new(1, 1, 1), 0.12)
+			button.BackgroundColor3 = button:GetAttribute("BaseColor"):Lerp(Color3.new(1, 1, 1), 0.12)
 		end
 	end)
 	button.MouseLeave:Connect(function()
-		button.BackgroundColor3 = color
+		button.BackgroundColor3 = button:GetAttribute("BaseColor")
 	end)
 	button.Activated:Connect(function()
 		if button.Active then
@@ -96,6 +97,12 @@ function W.button(text: string, props: { [string]: any }, onClick: () -> ()): Te
 		end
 	end)
 	return button
+end
+
+-- Changes the colour of a button. The hover effect keeps this colour.
+function W.setColor(button: TextButton, color: Color3)
+	button:SetAttribute("BaseColor", color)
+	button.BackgroundColor3 = color
 end
 
 -- Turns a button on or off. An off button is grey and does not react.

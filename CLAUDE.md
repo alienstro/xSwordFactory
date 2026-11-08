@@ -36,10 +36,19 @@ Read the design before you change game behavior.
 
 ## Tests
 
-- Keep the game logic in pure modules in `src/shared`. These modules do not call Roblox APIs.
-- Test the logic with Jest Lua (`@jsdotlua/jest`).
-- Give each chance roll a random source as a parameter, for example `Random.new(seed)`. A seeded source makes each test give the same result each time.
+- Keep the game logic in pure modules in `src/shared`. These modules do not call Roblox services.
+- Pure modules require siblings with `require("./Name")`. The same path works in Roblox and in Lune.
+- Give each chance roll a random source with `NextNumber()`. In Roblox, use `Random.new()`. In tests, use `Harness.rng(seed)` or `Harness.fixedRng({...})`.
+- Run the unit tests with Lune: `lune run tests/run`. Add each new spec file to `tests/run.luau`.
 - Use Studio MCP for UI checks and exploratory QA.
 - Later, run the tests in CI through the Open Cloud Luau Execution API.
 
-Jest Lua is not set up yet. Set it up before you write the first test.
+## Studio MCP clicks
+
+- `user_mouse_input` uses GUI coordinates: `AbsolutePosition + AbsoluteSize / 2` of the button.
+- Screenshots use a different scale. Do not take click coordinates from a screenshot.
+- Some clicks do not reach the game. If a click fails, test the server with `Remotes.Request:InvokeServer(...)` from the Client data model.
+
+## Saved data in Studio
+
+Studio does not save data until **Game Settings → Security → Enable Studio Access to API Services** is on. Without it, ProfileStore uses a mock store, and data resets after each playtest.
